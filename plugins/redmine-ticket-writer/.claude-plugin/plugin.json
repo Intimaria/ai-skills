@@ -1,0 +1,10 @@
+{
+  "name": "redmine-ticket-writer",
+  "description": "Write and format Redmine tickets, issues and wiki pages in Redmine's Textile markup, ready to share with colleagues.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Inti Tidball",
+    "email": "inti.tidball@mikroways.net"
+  },
+  "keywords": ["redmine", "textile", "tickets", "issues", "documentation"]
+}

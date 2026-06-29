@@ -1,0 +1,17 @@
+{
+  "name": "ai-skills",
+  "owner": {
+    "name": "Inti Tidball",
+    "email": "inti.tidball@mikroways.net"
+  },
+  "plugins": [
+    {
+      "name": "redmine-ticket-writer",
+      "source": "./plugins/redmine-ticket-writer",
+      "description": "Write and format Redmine tickets, issues and wiki pages in Textile (h1. headers, @code@, <pre><code>, |_. tables), ready to copy-paste. Produces a .textile file.",
+      "version": "0.1.0",
+      "category": "documentation",
+      "keywords": ["redmine", "textile", "tickets", "issues", "documentation"]
+    }
+  ]
+}
