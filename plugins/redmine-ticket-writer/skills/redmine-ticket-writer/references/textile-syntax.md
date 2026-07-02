@@ -1,7 +1,10 @@
 # Redmine Textile — full syntax reference
 
-Consult this when SKILL.md's core syntax doesn't cover the construct you need. Source:
-Redmine's official `RedmineTextFormattingTextile` / `wiki_syntax_detailed_textile` docs.
+Consult this when SKILL.md's core syntax doesn't cover the construct you need **and the target
+Redmine is in Textile mode**. If the instance is in Markdown mode (the modern default), use
+`references/redmine-markdown-syntax.md` instead — that file also lists the gotchas for converting
+Textile content to Markdown. Source: Redmine's official `RedmineTextFormattingTextile` /
+`wiki_syntax_detailed_textile` docs.
 
 ## Table of contents
 - [Headings & anchors](#headings--anchors)
