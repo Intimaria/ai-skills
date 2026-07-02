@@ -1,6 +1,6 @@
 # ai-skills
 
-A personal/team [Claude Code](https://docs.claude.com/en/docs/claude-code) plugin marketplace —
+A [Claude Code](https://docs.claude.com/en/docs/claude-code) plugin marketplace —
 a collection of skills shared via this repo.
 
 ## Install 
@@ -26,7 +26,7 @@ To get updates later:
 
 | Plugin | What it does |
 |--------|--------------|
-| `redmine-ticket-writer` | Write/format Redmine tickets, issues and wiki pages in Textile (the markup Redmine uses), ready to copy-paste. |
+| `redmine-ticket-writer` | Write/format Redmine tickets, issues and wiki pages in Markdown or Textile (the markup Redmine uses), ready to copy-paste. |
 
 ## Layout
 
