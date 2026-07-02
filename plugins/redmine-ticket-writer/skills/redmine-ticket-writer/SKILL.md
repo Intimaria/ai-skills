@@ -1,26 +1,36 @@
 ---
 name: redmine-ticket-writer
 description: >-
-  Write or edit Redmine tickets, issues, wiki pages, or status writeups in Redmine's
-  Textile formatting (h1. headers, @inline code@, <pre><code class="lang"> blocks, |_. tables,
-  bq. callouts) so they render cleanly in Redmine and can be shared with colleagues. Use this
-  whenever the user wants to produce, format, or clean up content destined for Redmine — a
-  ticket, issue description, comment, wiki page, technical writeup, migration/handoff summary,
-  or "documento" for the issue tracker — even when they just say "armá un ticket", "write this
-  up for Redmine", "pasalo a formato redmine", "make a ticket so I can share it", or mention
-  Redmine/Textile. Also triggers when someone calls Textile/Redmine markup "markdown de redmine"
-  (it's actually Textile, not Markdown). Produces a .textile file ready to paste into Redmine.
+  Write or edit Redmine tickets, issues, wiki pages, or status writeups in the format your
+  Redmine actually renders — GitHub-flavored Markdown (# headers, ```lang fences, GFM tables,
+  > callouts) when the instance is in Markdown/CommonMark mode (the common default now), or
+  Textile (h1., @code@, |_. tables, bq.) when it's in the older Textile mode. Use this whenever
+  the user wants to produce, format, or clean up content destined for Redmine — a ticket, issue
+  description, comment, wiki page, technical writeup, migration/handoff summary, or "documento"
+  for the issue tracker — even when they just say "armá un ticket", "write this up for Redmine",
+  "pasalo a formato redmine", "make a ticket so I can share it", or mention Redmine/Textile/CommonMark.
+  Also triggers when someone calls the markup "markdown de redmine". Defaults to Markdown (.md);
+  produces Textile (.textile) on request or when the Redmine is in Textile mode. Also handles
+  converting existing Textile content to Markdown. Produces a file ready to paste into Redmine.
 ---
 
-# Redmine ticket writer (Textile)
+# Redmine ticket writer (Markdown or Textile)
 
-Redmine's default wiki/issue markup is **Textile**, not Markdown — people often call it
-"markdown de Redmine," but the syntax differs (`h1.` instead of `#`, `<pre><code>` instead of
-fenced blocks, `|_.` table headers, `@code@` inline). Getting this right matters because a
-ticket pasted in the wrong syntax renders as a wall of literal markup that colleagues can't read.
+A Redmine instance renders wiki/issue text with **one** configured text formatter, and the markup
+differs sharply between them:
 
-This skill produces a well-structured Textile document written to a `.textile` file, so the user
-can copy-paste it straight into a Redmine ticket, comment, or wiki page.
+- **Markdown mode** — GitHub-flavored Markdown built on the [CommonMark](https://commonmark.org/help/)
+  standard (`#` headers, fenced ```lang``` code, `| GFM | tables |`, `>` quotes). This is the
+  common default on modern Redmine and is almost certainly what you want now.
+- **Textile mode** — the older default (`h1.` headers, `@code@`, `|_.` tables, `bq.`). Still live
+  on many long-running instances.
+
+Getting the format right matters because a ticket written for the wrong mode renders as a wall of
+literal markup that colleagues can't read. **A `#` heading in a Textile-mode Redmine shows up as a
+literal `#`; an `h1.` in a Markdown-mode Redmine shows up as literal `h1.`.**
+
+This skill produces a well-structured document written to a file (`.md` by default, `.textile` on
+request), so the user can copy-paste it straight into a Redmine ticket, comment, or wiki page.
 
 ## Workflow
 
@@ -29,142 +39,135 @@ can copy-paste it straight into a Redmine ticket, comment, or wiki page.
    file paths, ARNs, decisions, pending items. Do not pad with generic boilerplate; a precise,
    data-rich ticket is the whole point. If key facts are missing, ask rather than invent.
 
-2. **Choose a structure that fits the ticket type** (see "Structure patterns" below). Most
+2. **Pick the format.** Default to **Markdown** (`.md`) — modern Redmine runs in Markdown/CommonMark
+   mode. Use **Textile** (`.textile`) when the user says their Redmine is in Textile mode, asks for
+   Textile, or is editing content that's already Textile. If you're genuinely unsure which mode an
+   instance is in, say so and default to Markdown; the tell-tale of a wrong guess is a previously
+   pasted ticket that shows raw `#`/`h1.` markup.
+
+3. **Choose a structure that fits the ticket type** (see "Structure patterns" below). Most
    technical tickets want: a one-line status/summary up top, a `{{>toc}}` if it's long, then
    sections. Short tickets (a bug, a single ask) don't need a TOC or many headings.
 
-3. **Write it in Textile.** Use the syntax in this file for the common cases; for anything less
-   common (alignment, spans, footnotes, attachments, cross-links) consult
-   `references/textile-syntax.md`.
+4. **Write it in the chosen syntax.** The comparison table below covers the 90% you'll reach for.
+   For anything less common — alignment, spans, footnotes, attachments, cross-links, and the
+   edge cases that bite during Textile→Markdown conversion — read the reference for your format:
+   - Markdown → `references/redmine-markdown-syntax.md`
+   - Textile → `references/textile-syntax.md`
 
-4. **Save to a file** named after the ticket, e.g. `<slug>.textile`, in a location the user can
-   reach (the working directory, or wherever the related work lives). Tell them the path and
-   that it's ready to copy-paste into Redmine.
+5. **Save to a file** named after the ticket, e.g. `<slug>.md` (or `<slug>.textile`), in a location
+   the user can reach. Tell them the path and that it's ready to copy-paste into Redmine.
 
-5. **Offer to adjust** — structure, length, level of detail. Mention they can ask for Markdown
-   instead if their Redmine is configured in Markdown mode (some are).
+6. **Offer to adjust** — structure, length, detail, or switching format (e.g. "same ticket in
+   Textile" / "convert this to Markdown").
 
-## Core Textile syntax (the 90% you'll use)
+## Core syntax — Markdown vs. Textile
 
-```textile
-h1. Title
-h2. Section
-h3. Subsection
+The common constructs, side by side. Markdown is the default column.
 
-*bold*   _italic_   +underline+   -strike-   @inline code@
+| Need | Markdown (default) | Textile |
+|------|--------------------|---------|
+| Heading L1 / L2 | `# Title` / `## Section` | `h1. Title` / `h2. Section` |
+| Bold / italic | `**bold**` / `*italic*` | `*bold*` / `_italic_` |
+| Strikethrough | `~~struck~~` | `-struck-` |
+| Inline code | `` `code` `` | `@code@` |
+| Bullet / nested | `- item` / indent 2 spaces | `* item` / `**` |
+| Numbered / nested | `1. item` / indent | `# item` / `##` |
+| Link | `[label](https://x)` | `"label":https://x` |
+| Blockquote / callout | `> note` | `bq. note` |
+| Task list | `- [ ]` / `- [x]` | `* [ ]` / `* [x]` |
+| Horizontal rule | `---` on its own line | `---` on its own line |
 
-* bullet
-** nested bullet
-# numbered
-## nested numbered
+**Code / command blocks** — highlighting uses the same [Rouge](https://github.com/rouge-ruby/rouge)
+languages in both modes (`shell`, `bash`, `yaml`, `hcl`, `sql`, `python`, `ruby`, `json`, `diff`,
+`go`, `java`, …):
 
-"link text":https://example.com
+````text
+Markdown:                      Textile:
+```shell                       <pre><code class="shell">
+kubectl -n mimir get pods      kubectl -n mimir get pods
+```                            </code></pre>
+````
 
-bq. A blockquote — great for warnings/notes that should stand out.
+**Tables** — Markdown needs a `|---|---|` separator row under the header; Textile marks header cells
+with `|_.`. Both need a blank line before the table:
 
-{{>toc}}   right-aligned table of contents (use {{toc}} for left)
+```text
+Markdown:                          Textile:
+| Component | Version |            |_. Component |_. Version |
+|-----------|---------|            | mimir | 5.8.0 |
+| mimir     | 5.8.0   |            | loki  | 0.79.0 |
+| loki      | 0.79.0  |
 ```
 
-**Tables** — header cells use `|_.`; a blank line must precede the table:
-
-```textile
-|_. Component |_. Version |_. Namespace |
-| mimir | 5.8.0 | mimir |
-| loki  | 0.79.0 | loki |
-```
-
-**Code / command blocks** — use `<pre><code class="lang">`; the class enables syntax
-highlighting (langs: `shell`, `bash`, `yaml`, `hcl`, `sql`, `python`, `ruby`, `json`, `diff`,
-`go`, `java`, etc.):
-
-```textile
-<pre><code class="shell">
-kubectl --context $GREEN -n mimir get pods
-helmfile -e shared-monitoring -f 00-mimir/helmfile.yaml -l name=mimir apply
-</code></pre>
-```
-
-> Note: inside `<pre>` blocks Textile is NOT processed, so `@`, `*`, `|` etc. are literal —
-> exactly what you want for commands and config.
+**Redmine-specific markup that works in *both* modes** (formatter-independent): issue links
+`#1234`, wiki links `[[WikiPage]]` / `[[Page|label]]`, changesets `commit:abc123`, repo files
+`source:path/to/file`, and the TOC macro `{{>toc}}` (right) / `{{toc}}` (left). Images/attachments
+*do* differ: Markdown `![alt](image.png)`, Textile `!image.png!`.
 
 ## Structure patterns
 
-Pick the shape that matches the ticket. These are starting points, not rigid templates —
-adapt to the content.
+Pick the shape that matches the ticket; these are section skeletons, not rigid templates. Render
+the headings/tables/code with your chosen format's syntax (see the table above).
 
 **Technical writeup / migration / handoff** (rich, multi-section):
-```textile
-h1. <Título>
+- Title, then `{{>toc}}` if long
+- One-line **Estado:** summary
+- `Contexto` — a before/after table
+- Numbered top-level sections per area, with prose, inventory tables, and command/config blocks
+- `Pendientes / cleanup` — a numbered list
+- `Fuera de alcance` — bullets noting whose responsibility each is
 
-{{>toc}}
+**Bug report:** `Resumen` · `Pasos para reproducir` (numbered) · `Esperado vs. actual` ·
+`Entorno` (field/value table) · `Logs` (code block).
 
-p. *Estado:* <one-line status>
-
-h2. Contexto
-|_. Item |_. Antes |_. Después |
-| ... | ... | ... |
-
-h1. 1. <Área>
-... prose, tablas de inventario, bloques <pre><code> con comandos/config ...
-
-h1. Pendientes / cleanup
-# item
-# item
-
-h1. Fuera de alcance
-* item (de quién es la responsabilidad)
-```
-
-**Bug report:**
-```textile
-h2. Resumen
-h2. Pasos para reproducir
-# ...
-h2. Esperado vs. actual
-h2. Entorno
-|_. Campo |_. Valor |
-h2. Logs
-<pre><code class="shell">...</code></pre>
-```
-
-**Task / change request:**
-```textile
-h2. Qué hay que hacer
-h2. Por qué
-h2. Criterios de aceptación
-* [ ] ...
-h2. Notas / riesgos
-bq. ...
-```
+**Task / change request:** `Qué hay que hacer` · `Por qué` · `Criterios de aceptación`
+(task-list checkboxes) · `Notas / riesgos` (callout).
 
 ## Gotchas that break rendering
 
-- **Tables:** there must be a blank line *before* the table, and the header marker is `|_.`
-  (not `|*`). A pipe `|` inside a cell needs escaping or it splits the cell.
-- **Headers need the trailing dot and a space:** `h1. Title`, not `h1.Title` or `# Title`.
-- **Code blocks:** prefer `<pre><code class="lang">…</code></pre>`. A bare `<pre>` works but
-  loses highlighting. Don't use triple-backtick fences — that's Markdown, and renders literally
-  in Textile mode.
-- **Lists:** `*`/`#` must be at the start of the line; nesting is `**`/`##`, not indentation.
-  Note `#` at line-start is an *ordered list item* in Textile (not a heading) — that's correct.
-- **Inline code is `@…@`**, not backticks.
-- **Literal `@`, `#`, `|`, `*` appearing as content in prose** (e.g. the special characters being
-  reported in a bug, a shell pipe in a sentence) get interpreted by Textile and mangle the output.
-  Wrap them in `<notextile>…</notextile>` or `==…==`, or put them inside an `@code@` / `<pre>` span.
-  Don't stack markers like `@@@` hoping they cancel out — that renders unpredictably.
+**Cross-cutting — the one that bites hardest:** *mode mismatch.* Markdown pasted into a Textile-mode
+Redmine (or vice versa) renders as literal markup. Confirm the instance's mode before writing; when
+unsure, default to Markdown and say so.
 
-When in doubt about a less-common construct, read `references/textile-syntax.md` before guessing —
+**Markdown (CommonMark/GFM) — the ones that surface when converting Textile → Markdown:**
+- **Backticks inside a code block** (e.g. a stacktrace `` EventDefinition`2 ``, an Oracle string
+  `` Trace`1 ``): a stray backtick mid-line is fine inside a ``` ``` fence, but if the content has a
+  line that *starts* with three-or-more backticks it closes the fence early. When code contains
+  backticks, use a `~~~` tilde fence (or a 4-backtick fence), or keep the original `<pre>…</pre>`
+  HTML — Redmine renders raw HTML in Markdown mode.
+- **Nested inline formatting inside a link** (e.g. Textile `" *@1.11.1@* ":url` = bold + inline code
+  as the link text): CommonMark *does* allow it — write `[**`1.11.1`**](url)` — but the delimiter
+  order matters and naive converters mangle it. Put the code span inside the emphasis, inside the
+  link brackets.
+- **`#1234` autolinks to an issue.** To show a literal `#1234` (a count, an anchor) escape it `\#1234`
+  or wrap it in `` `#1234` ``.
+- **Single newlines do NOT break lines in CommonMark** — soft-wrapped prose collapses into one
+  paragraph. Separate paragraphs with a blank line; force a hard break with two trailing spaces or a
+  backslash. (This is the opposite of Textile.)
+
+**Textile:**
+- Tables need a blank line *before* them and `|_.` (not `|*`) for header cells.
+- Headers need the trailing dot and a space: `h1. Title`, not `h1.Title`.
+- Code blocks: prefer `<pre><code class="lang">…</code></pre>`; never use ``` ``` ``` fences (that's
+  Markdown and renders literally). Inside `<pre>`, all Textile markup is literal.
+- Lists nest by repeating the marker (`**`/`##`), not by indentation.
+- Literal `@ # | *` in prose get interpreted — wrap in `<notextile>…</notextile>` or `==…==`.
+
+When in doubt about a less-common construct, read the reference for your format before guessing —
 a wrong guess renders as visible markup in the colleague's face.
 
 ## Future extension: push directly to Redmine (API + token)
 
-Currently this skill only emits a `.textile` file for manual copy-paste — deliberately, so it
-needs no credentials. A natural next step (left for whoever extends this) is to create/update
-tickets directly via the Redmine REST API:
+Currently this skill only emits a file for manual copy-paste — deliberately, so it needs no
+credentials. A natural next step (left for whoever extends this) is to create/update tickets
+directly via the Redmine REST API:
 
 - `POST /issues.json` to create, `PUT /issues/:id.json` to update; auth via the
   `X-Redmine-API-Key` header (the user's Redmine API token).
-- The Textile content goes in the `issue.description` field (or `notes` for a comment).
+- The formatted content goes in the `issue.description` field (or `notes` for a comment) — the same
+  Markdown/Textile you'd paste manually. The instance's formatter setting decides how it renders, so
+  the format still has to match the instance's mode.
 - Config needed: `REDMINE_URL` + API key (env vars or a small config file — never hardcode the
   token, and don't commit it).
 
