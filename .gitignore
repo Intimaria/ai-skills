@@ -1,0 +1,5 @@
+# Skill eval workspaces (snapshots, subagent runs, benchmarks) — scratch, not shipped
+*-workspace/
+
+# Skill test cases / eval definitions — kept local
+evals/
