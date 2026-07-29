@@ -10,6 +10,9 @@ description: >-
   Also triggers when someone calls the markup "markdown de redmine".
   DEFAULT is always Markdown (.md). Textile (.textile) ONLY when the user explicitly requests it
   or confirms their Redmine instance is in Textile mode. Also handles converting Textile → Markdown.
+  NEVER use emojis as this breaks Redmine rendering (it causes data loss, which should never happen).
+  Do not mention meta-information discussed when writing the ticket, like this skill, Redmine, Textile,
+  Markdown, hours, or any related term in the ticket body or notes.
 ---
 
 # Redmine ticket writer
@@ -25,15 +28,26 @@ offer it as an alternative unprompted.
 
 Output file: `.md` for Markdown (default), `.textile` only if Textile is requested.
 
+**Ticket language.** This skill is written in English, but the ticket you produce is written in the
+language of the Redmine instance / team — **Spanish for `proyectos.mikroways.net`** (the usual case).
+Match whatever language the issue and its existing comments already use. Keep the whole ticket in one
+language — don't mix. Section headings, prose, and the management summary all go in that language;
+only code, commands, field names, and syntax tokens (`project_id`, `{{>toc}}`, ```` ```shell ````…)
+stay as-is. The example headings below are in Spanish because that's the common output; they're
+examples, not fixed labels.
+
 Getting the format right matters: a `#` heading pasted into a Textile-mode Redmine shows up as
 a literal `#`; an `h1.` in a Markdown-mode Redmine shows up as literal `h1.`.
 
 ## Workflow
 
-1. **Get the real content first.** A ticket is only useful if it's accurate. Pull the actual
-   facts from the conversation, the repo, git history, or by asking — versions, IDs, commands,
-   file paths, ARNs, decisions, pending items. Do not pad with generic boilerplate; a precise,
-   data-rich ticket is the whole point. If key facts are missing, ask rather than invent.
+1. **Scope it, then get the real content.** First agree on *what belongs in this ticket* — only
+   what's relevant to this ticket's task, project, and client. A day's work often touches things
+   that aren't pertinent here; leave those out. If the work spanned more than one distinct task,
+   ask whether to split it into separate tickets (one ticket = one task/scope). Then pull the
+   actual facts — versions, IDs, commands, file paths, ARNs, decisions, pending items — from the
+   conversation, the repo, git history, or by asking. Don't pad with boilerplate or invent missing
+   facts; ask. (See **Protocols → Scope**.)
 
 2. **Format: default to Markdown.** Only use Textile if the user says so. If you're unsure
    which mode an instance is in, default to Markdown. The tell-tale of a wrong guess is a
@@ -49,10 +63,75 @@ a literal `#`; an `h1.` in a Markdown-mode Redmine shows up as literal `h1.`.
    - Markdown → `references/redmine-markdown-syntax.md`
    - Textile → `references/textile-syntax.md`
 
-5. **Save to a file** named after the ticket, e.g. `<slug>.md` (or `<slug>.textile`), in a
-   location the user can reach. Tell them the path and that it's ready to copy-paste into Redmine.
+5. **Deliver as a draft first.** Save the ticket to a file named after it, e.g. `<slug>.md`
+   (or `<slug>.textile`), in a location the user can reach; tell them the path. Only create or
+   update the ticket in Redmine via the API **after the user explicitly approves it** (see
+   **Protocols → Delivery** and `references/redmine-api.md`).
 
 6. **Offer to adjust** — structure, length, detail, or switching format if needed.
+
+## Protocols
+
+These conventions come from how the team runs client tickets on `proyectos.mikroways.net`. They
+shape every ticket, not just its formatting.
+
+**Scope.** A ticket covers one task. Before writing the technical body, agree with the
+author on what's actually relevant to *this* ticket's task, project, and client — the day's work
+often touches things that don't belong here, and dumping everything in makes the ticket useless to
+future readers. Leave out the irrelevant. If the work spanned several distinct tasks, ask whether
+to split it into separate tickets rather than merging them. Remember, the ticket MUST be useful
+for the current user and future developers.
+
+**Communication (dual audience).** Every ticket serves two readers. Open with a short
+management-facing summary, then keep the technical detail clearly separate below it, so each reader
+finds what they need without wading through the other's part:
+- **Management summary** — the first section. Plain language, no jargon: what was accomplished
+  *this work period* in relation to the ticket, phrased so the PM can grasp it quickly and relay it
+  to the client. Keep it short. The heading wording is up to you and the ticket's language — e.g.
+  `## Resumen para gestión` (Spanish) — the goal is a fast, PM-readable summary, not a fixed label.
+- **Technical body** — below and clearly separated, following the structure patterns: accurate
+  facts, commands, versions, decisions. A developer (including future-you) must be able to read this
+  part on its own.
+
+The management summary is **not optional, and it applies to every ticket** — a one-line bug, a
+support request, and a big migration alike. It's tempting to drop it ("the ticket is simple", "a
+support ticket doesn't need it", "the Status line already says it") — none of those hold. The
+summary exists for the *non-technical* reader: a `Status` value like "En curso" is a state label,
+not a plain-language account of what happened or what's being asked. If the ticket really is
+trivial, the summary is a single sentence — but it is always present, and it always comes first.
+
+**Status is an API field, not ticket text.** Never write `**Estado:** Completado` or any status
+label in the description or any part of the ticket body. Status (`status_id`) is set via the API
+when pushing the ticket — see `references/redmine-api.md`. The standard workflow on
+`proyectos.mikroways.net`: set to `"En curso"` while working on the ticket. 
+Set to `"Validar por el cliente"` when logging completed work that needs client review.  
+Only management (or the engineer, when no client review is needed) sets it to`"Resuelta"`.
+
+**Delivery.** Always produce the draft file first and show it. Push to Redmine via the API
+only after explicit approval. Updating an existing ticket (a `PUT` / journal note) is lower-risk;
+creating a new issue is the most visible action — always confirm before creating. See
+`references/redmine-api.md`.
+
+**Hours.** Hours are **always a dialogue with the user** — never guessed, inferred from the work, or
+auto-filled. While gathering the ticket's content, work out the hours per task *with the author* and
+get them approved before recording anything. If you don't have them, ask; don't estimate (no
+"~3 horas"). Log the approved hours as Redmine time entries, one per (ticket, task) —
+there can be more than one entry per ticket on the same day (`spent_on`) — via the API once
+approved. The PM plans from the logged time.
+
+To open that dialogue, **proactively propose a figure** based on the work done this session, rather
+than waiting to be asked — e.g. "this session has run ~1.5 h and we did X and Y; does ~1.5 h look
+right to log for this task, or adjust?" That suggestion is a starting point for the user to review,
+**never the source of truth**: session wall-clock includes idle time, breaks, the conversation
+itself, and often several tasks, and a task can span multiple sessions. The logged value is always
+the one the user confirms.
+
+Hours never appear **anywhere in the ticket text** — not the body, not the management summary, and
+**not the `Contexto` / metadata table** (no `Tiempo insumido` row, no "~3 horas"). They live only in
+Redmine's time tracking. Missing an API token is **not** a reason to write them into the description
+instead: if you can't log them yet, say the hours still need to be logged as time entries and ask
+for the token / details (or leave them out and flag them as pending). Putting hours in the ticket is
+never the fallback.
 
 ## Markdown syntax (primary — use this)
 
@@ -130,15 +209,21 @@ kubectl -n mimir get pods
 
 ## Structure patterns
 
-Pick the shape that matches the ticket. Render headings/tables/code with Markdown syntax (or
-Textile if explicitly requested).
+Pick the shape that matches the ticket, and render headings/tables/code with Markdown syntax (or
+Textile if explicitly requested). The heading names below are **examples in the ticket's language**
+(Spanish, the common case) — adapt the wording to the actual content; they are not fixed labels. The
+one constant is mandatory: the **first section is always the management summary** (see
+Communication) — plain, PM-readable language, even in a bug or support ticket where it may be a
+single sentence under a heading like `Resumen`. Technical detail always comes clearly separated
+below it.
 
 **Technical writeup / migration / handoff** (rich, multi-section):
 - Title, then `{{>toc}}` if long
-- One-line **Estado:** summary
+- **`## Resumen para gestión`** — plain-language summary of what was achieved this period, for the
+  PM/client (see **Protocols → Communication**)
 - `Contexto` — a before/after table
 - Numbered top-level sections per area, with prose, inventory tables, and command/config blocks
-- `Pendientes / cleanup` — a numbered list
+- `Pendientes / limpieza` — a checklist
 - `Fuera de alcance` — bullets noting whose responsibility each is
 
 **Bug report:** `Resumen` · `Pasos para reproducir` (numbered) · `Esperado vs. actual` ·
@@ -169,17 +254,12 @@ Textile if explicitly requested).
 **Mode mismatch (the worst one):** Markdown pasted into a Textile-mode Redmine (or vice versa)
 renders as literal markup. Confirm the instance's mode before writing; default to Markdown when unsure.
 
-## Pushing directly to Redmine (API + token)
+## Pushing to Redmine via API
 
-The Redmine REST API is the preferred way to post content programmatically — validated and working
-on `proyectos.mikroways.net`.
+Creating/updating tickets programmatically, and logging time entries, is done through the Redmine
+REST API — validated on `proyectos.mikroways.net`. This is always an explicit, approved step, never
+automatic (see **Protocols → Delivery**).
 
-- `POST /issues.json` → create issue; `PUT /issues/:id.json` → update / add note
-- Auth header: `X-Redmine-API-Key: <token>`
-- Markdown content goes in `issue.description` (or `notes` for a comment/journal entry)
-- Status/percentage: `status_id` (10 = "Validar por el cliente", 2 = "En curso") and `done_ratio`
-- Time entries: `POST /time_entries.json` with `issue_id`, `spent_on`, `hours`, `activity_id`, `comments`
-- Config: `REDMINE_URL` + API key in env vars — never hardcode the token, never commit it.
-
-Always encode the body with proper JSON (use `python3 -c "import json,sys; ..."` or equivalent)
-to avoid shell escaping issues with special characters in ticket content.
+Endpoints, the **required fields for creating vs. updating** an issue, auth, time entries, and the
+instance-specific IDs all live in **`references/redmine-api.md`**. Read it before making any API
+call — the create-vs-update distinction and the per-instance IDs are easy to get wrong.
