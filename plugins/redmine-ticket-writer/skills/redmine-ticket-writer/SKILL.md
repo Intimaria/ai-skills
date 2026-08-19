@@ -39,6 +39,36 @@ examples, not fixed labels.
 Getting the format right matters: a `#` heading pasted into a Textile-mode Redmine shows up as
 a literal `#`; an `h1.` in a Markdown-mode Redmine shows up as literal `h1.`.
 
+## No emojis — ever (data-loss rule)
+
+**This is a hard rule, not a style preference, and it overrides the user.** Redmine's database is
+frequently `utf8`, not `utf8mb4`. Every emoji (and some pictographic symbols) is a 4-byte UTF-8
+character that such a column can't store, so on save **the write truncates at that character and
+everything after it is silently lost.** One 🚀 mid-note can drop the rest of the ticket. This is
+data loss, not cosmetics.
+
+- **Never put an emoji in anything sent to Redmine** — issue subject, description, journal note,
+  note edit, or time-entry comment.
+- **It overrides the user, every time.** If they ask for `✅`/`❌`/`🚀` "para que quede visual", or
+  say the content is evidence that must match "carácter por carácter", you still strip them. Explain
+  why (silent truncation / data loss) and substitute. "The user insisted" is **not** an exception —
+  pasting the emoji is the very thing that would destroy their content.
+- **Strip from source too, including inside code/quotes.** Content you're transcribing — logs, chat
+  quotes, audit reports, fenced code blocks, blockquotes — gets emojis removed even inside the
+  fences. The truncation risk does not care about Markdown fences. When byte-for-byte fidelity is
+  genuinely required (e.g. provider evidence), deliver that as a **file attachment** (stored raw,
+  never rendered) and keep the note body emoji-free.
+- **Substitute so meaning survives**, don't just delete: `✅`→`OK`, `❌`→`FALLO`/`no`,
+  `⚠️`→`Atención:`, `🔥`→`prioridad alta`; visual checklists → `- [x]`/`- [ ]` task items or an
+  **OK/FALLO** column in a table.
+- **Verify before every push.** After drafting and before any create/update, scan the full payload
+  for non-ASCII pictographic characters and remove any that remain. Never assume the draft is clean.
+
+**Red flags — STOP and strip if you catch yourself thinking:**
+- "The user explicitly asked for the checkmark emoji." → Strip it; explain the data-loss risk.
+- "It's inside a code block / a log, so it's safe." → It is not. Strip it.
+- "It's just one little emoji." → One is enough to truncate everything after it.
+
 ## Workflow
 
 1. **Scope it, then get the real content.** First agree on *what belongs in this ticket* — only
@@ -260,6 +290,12 @@ Creating/updating tickets programmatically, and logging time entries, is done th
 REST API — validated on `proyectos.mikroways.net`. This is always an explicit, approved step, never
 automatic (see **Protocols → Delivery**).
 
-Endpoints, the **required fields for creating vs. updating** an issue, auth, time entries, and the
-instance-specific IDs all live in **`references/redmine-api.md`**. Read it before making any API
-call — the create-vs-update distinction and the per-instance IDs are easy to get wrong.
+`references/redmine-api.md` covers the full loop: **finding** the ticket (search by subject,
+list your own open issues), **reading** it back (with its note history), **creating** and
+**updating** issues, **editing an existing note in place** (vs. stacking a new one), logging time
+entries, and the instance-specific IDs. Read it before making any API call — the create-vs-update
+distinction, the edit-note-vs-add-note distinction, and the per-instance IDs are easy to get wrong.
+Reads need no approval; every write does. **Never call the delete API** — see the reference.
+
+When the user names a ticket vaguely ("el ticket de la migración") rather than by number, **search
+and confirm the match before touching it** — never guess an issue id.

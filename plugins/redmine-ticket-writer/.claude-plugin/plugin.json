@@ -1,7 +1,7 @@
 {
   "name": "redmine-ticket-writer",
   "description": "Write and format Redmine tickets, issues and wiki pages in Markdown (default) or Textile, ready to share with colleagues.",
-  "version": "3.0.0",
+  "version": "5.0.0",
   "author": {
     "name": "Inti Tidball",
     "email": "inti.tidball@mikroways.net"
