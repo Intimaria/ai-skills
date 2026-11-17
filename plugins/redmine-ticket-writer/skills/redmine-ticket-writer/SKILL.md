@@ -96,7 +96,9 @@ data loss, not cosmetics.
 5. **Deliver as a draft first.** Save the ticket to a file named after it, e.g. `<slug>.md`
    (or `<slug>.textile`), in a location the user can reach; tell them the path. Only create or
    update the ticket in Redmine via the API **after the user explicitly approves it** (see
-   **Protocols → Delivery** and `references/redmine-api.md`).
+   **Protocols → Delivery** and `references/redmine-api.md`). Together with the draft, ask for
+   the API fields: **status, version, % done and hours** — each one confirmed by the user, none
+   assumed (see **Protocols → Version and progress**).
 
 6. **Offer to adjust** — structure, length, detail, or switching format if needed.
 
@@ -136,6 +138,19 @@ when pushing the ticket — see `references/redmine-api.md`. The standard workfl
 `proyectos.mikroways.net`: set to `"En curso"` while working on the ticket. 
 Set to `"Validar por el cliente"` when logging completed work that needs client review.  
 Only management (or the engineer, when no client review is needed) sets it to`"Resuelta"`.
+
+**Version and progress are a dialogue, every push.** Two API fields that are easy to forget and
+must never be assumed:
+- **Version** (`fixed_version_id`, "Versión prevista"). Before every create or update, **ask** which
+  version the ticket belongs to. Read the ticket's current version and the project's open versions
+  (`GET /projects/{id}/versions.json`) and show them, so the user picks from real options. Never
+  guess it from the ticket subject, never copy it from another ticket, never pick "the latest one",
+  and never leave it as-is silently: even "keep the current version" is the user's explicit answer.
+- **Progress** (`done_ratio`, "% Realizado"). Ask the percentage on every create or update and send
+  it explicitly. It is **not** derived from the status: "Resuelta" or "Validar por el cliente" can
+  stay at 0% unless you set it. Show the current value when asking.
+
+Both are API fields, never ticket text. After the push, read the issue back and confirm both stuck.
 
 **Delivery.** Always produce the draft file first and show it. Push to Redmine via the API
 only after explicit approval. Updating an existing ticket (a `PUT` / journal note) is lower-risk;
