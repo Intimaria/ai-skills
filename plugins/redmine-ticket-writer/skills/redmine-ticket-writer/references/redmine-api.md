@@ -116,7 +116,9 @@ id to edit an existing note (see below). This is also the read-back used to conf
 **Commonly needed:**
 - `tracker_id` — issue type (Bug, Feature, Support…); often required by the project's workflow
 - `description` — the Markdown body
-- `status_id`, `priority_id`, `assigned_to_id`, `done_ratio` — optional
+- `status_id`, `priority_id`, `assigned_to_id` — optional
+- `fixed_version_id`, `done_ratio` — optional for Redmine, but **always asked and sent** by this
+  skill (see "Status, assignee, version & progress" below)
 
 ```json
 {
@@ -149,9 +151,11 @@ send only what you're changing. To add a comment/journal entry, send `notes`:
 ```
 
 - `notes` — Markdown journal note (a comment on the issue)
-- `status_id` — workflow state; **default `2` ("En curso")** — see "Status, assignee & progress" below
+- `status_id` — workflow state; **default `2` ("En curso")** — see "Status, assignee, version & progress" below
 - `assigned_to_id` — who owns the issue; set it to the **author (you)** — see below
-- `done_ratio` — percent complete (0–100); often **derived from the status**, see below
+- `fixed_version_id` — target version ("Versión prevista"); **ask the user, never assume** — see below
+- `done_ratio` — percent complete (0–100); **ask the user and send it explicitly**; it is not
+  derived from the status
 - `private_notes: true` — make the note internal (not client-visible), when the instance supports it
 
 A successful `PUT` returns `204 No Content` (empty body).
@@ -214,13 +218,14 @@ instance, look up the real IDs first with these read endpoints (same auth header
 | `tracker_id` | `GET /trackers.json` | Bug / Feature / Support / … |
 | `project_id` | `GET /projects.json` | numeric id or string identifier |
 | `priority_id` | `GET /enumerations/issue_priorities.json` | |
+| `fixed_version_id` | `GET /projects/{project_id}/versions.json` | Per project. Offer only `status: open` versions, plus the ticket's current one |
 
 > Footnote: if this skill is ever used against a Redmine other than `proyectos.mikroways.net`,
 > re-check every id above — status/activity/tracker/priority ids are not portable between instances.
 
-## Status, assignee & progress (and confirming they stuck)
+## Status, assignee, version & progress (and confirming they stuck)
 
-On a real post these three fields silently failed to apply (the issue stayed "Nueva", unassigned,
+On a real post these fields silently failed to apply (the issue stayed "Nueva", unassigned,
 0% done), so set them deliberately and verify:
 
 - **Status.** Default to `status_id: 2` ("En curso") when logging work that's in progress. Use
@@ -233,9 +238,18 @@ On a real post these three fields silently failed to apply (the issue stayed "Nu
   `GET /issues/{id}.json?include=allowed_statuses` (Redmine 5.1+).
 - **Assignee.** Assign the issue to the **author (you)** — it is not automatic. Fetch your id once
   from `GET /users/current.json` and send `assigned_to_id: <that id>`.
-- **Progress (`done_ratio`).** Send `done_ratio` explicitly (agree the value with the user, like hours). 
+- **Version (`fixed_version_id`).** Ask on every create/update; never assume. Steps:
+  1. Read the ticket's current version: `fixed_version` in `GET /issues/{id}.json` (absent = none).
+  2. List the project's versions: `GET /projects/{project_id}/versions.json`; keep `status: open`.
+  3. Show the user the current one and the open options (name + id), and let them choose.
+     "Keep the current one" is valid only as the user's explicit answer.
+  4. Send `fixed_version_id: <id>`. To clear it, send `fixed_version_id: ""`.
+  A version that is closed or belongs to another project is rejected with `422`.
+- **Progress (`done_ratio`).** Ask the percentage on every create/update (agree the value with the
+  user, like hours), showing the current value, and send `done_ratio` explicitly. It is **not**
+  derived from the status: a ticket moved to "Resuelta" stays at its old % unless you set it.
 - **Verify the write.** After every create/update, **read the issue back** (`GET /issues/{id}.json`)
-  and confirm `status`, `assigned_to`, and `done_ratio` match what you intended. If they don't,
+  and confirm `status`, `assigned_to`, `fixed_version`, and `done_ratio` match what you intended. If they don't,
   tell the user (usually a workflow-permission or done-ratio-mode issue) — never assume the write
   succeeded.
 
